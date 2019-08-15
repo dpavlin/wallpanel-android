@@ -24,8 +24,10 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
 import android.os.BatteryManager
 import android.os.Handler
+import android.util.Log
 import org.json.JSONException
 import org.json.JSONObject
 import timber.log.Timber
@@ -42,6 +44,7 @@ constructor(private val context: Context){
     private var callback: SensorCallback? = null
     private var sensorsPublished: Boolean = false
     private var lightSensorEvent: SensorEvent? = null
+    private val lastSensorEvent = mutableMapOf<String,Long?>()
 
     private val batteryHandlerRunnable = object : Runnable {
         override fun run() {
@@ -58,7 +61,8 @@ constructor(private val context: Context){
         Timber.d("Creating SensorReader")
         mSensorManager = context.getSystemService(SENSOR_SERVICE) as SensorManager
         for (s in mSensorManager.getSensorList(Sensor.TYPE_ALL)) {
-            if (getSensorName(s.type) != null)
+            Log.i("TAG", s.toString())
+            //if (getSensorName(s.type) != null)
                 mSensorList.add(s)
         }
     }
@@ -86,7 +90,7 @@ constructor(private val context: Context){
             callback?.publishSensorData(sensorName, sensorData)
         }
     }
-
+/*
     private fun getSensorName(sensorType: Int): String? {
         when (sensorType) {
             Sensor.TYPE_AMBIENT_TEMPERATURE -> return TEMPERATURE
@@ -94,6 +98,7 @@ constructor(private val context: Context){
             Sensor.TYPE_MAGNETIC_FIELD -> return MAGNETIC_FIELD
             Sensor.TYPE_PRESSURE -> return PRESSURE
             Sensor.TYPE_RELATIVE_HUMIDITY -> return HUMIDITY
+            else -> sensorType.toString()
         }
         return null
     }
@@ -108,7 +113,7 @@ constructor(private val context: Context){
         }
         return null
     }
-
+*/
     /**
      * Start all sensor readings.
      */
@@ -116,7 +121,7 @@ constructor(private val context: Context){
         Timber.d("startSensorReadings")
         if(mSensorManager != null) {
             for (sensor in mSensorList) {
-                mSensorManager.registerListener(sensorListener, sensor, 1000)
+                mSensorManager.registerListener(sensorListener, sensor, SENSOR_DELAY_NORMAL)
             }
         }
     }
@@ -133,8 +138,19 @@ constructor(private val context: Context){
 
     private val sensorListener = object : SensorEventListener {
         override fun onSensorChanged(event: SensorEvent?) {
-            if(event != null && !sensorsPublished) {
+            //if(event != null && !sensorsPublished) {
+            if(event != null) {
+                val t = lastSensorEvent.get( event.sensor.name )
+                if ( t == null || ( event.timestamp - t ) / 1_000_000 > updateFrequencyMilliSeconds) {
+                    lastSensorEvent.put(event.sensor.name, event.timestamp)
+                    if ( t != null ) Log.i("XXX-update", "dt=" +(event.timestamp - t))
+                } else {
+                    return
+                }
+                //Log.i("XXX","timestamp="+event.timestamp.toLong()+ " id="+ event.sensor.id.toInt()+" event.values="+ event.values.size.toString() + event.values[0].toString())
+                //Log.i("XXX","event="+event.toString())
                 var data = JSONObject()
+                /*
                 if(event.sensor.type == Sensor.TYPE_LIGHT) {
                     lightSensorEvent = event
                 }
@@ -144,11 +160,22 @@ constructor(private val context: Context){
                     data.put(ID, lightSensorEvent!!.sensor.name)
                     publishSensorData(getSensorName(lightSensorEvent!!.sensor.type), data)
                 }
+                */
                 data = JSONObject()
-                data.put(VALUE, event.values[0])
-                data.put(UNIT, getSensorUnit(event.sensor.type))
-                data.put(ID, event.sensor.name)
-                publishSensorData(getSensorName(event.sensor.type), data)
+                //data.put(VALUE, event.values[0])
+                data.put("timestamp", event.timestamp)
+                data.put("name", event.sensor.name)
+                data.put("vendor", event.sensor.vendor)
+                data.put("type", event.sensor.stringType.replace("android.sensor.",""))
+
+                var max_values = event.values.size
+                for( i in 0 until max_values ) {
+                    data.put(String.format("v%d",i), event.values[i])
+
+                }
+                //data.put(UNIT, getSensorUnit(event.sensor.type))
+                //data.put(ID, event.sensor.name)
+                publishSensorData(event.sensor.stringType.replace("android.sensor.",""), data)
                 sensorsPublished = true
             }
         }
