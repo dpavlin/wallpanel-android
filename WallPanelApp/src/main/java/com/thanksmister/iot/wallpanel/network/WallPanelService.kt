@@ -29,6 +29,7 @@ import android.net.wifi.WifiManager
 import android.os.*
 import android.support.v4.content.ContextCompat
 import android.support.v4.content.LocalBroadcastManager
+import android.util.Log
 import com.koushikdutta.async.AsyncServer
 import com.koushikdutta.async.ByteBufferList
 import com.koushikdutta.async.http.body.JSONObjectBody
@@ -112,6 +113,7 @@ class WallPanelService : LifecycleService(), MQTTModule.MQTTListener {
     private var localBroadCastManager: LocalBroadcastManager? = null
     private var mqttAlertMessageShown = false
     private var mqttConnected = false
+
     inner class WallPanelServiceBinder : Binder() {
         val service: WallPanelService
             get() = this@WallPanelService
@@ -197,6 +199,28 @@ class WallPanelService : LifecycleService(), MQTTModule.MQTTListener {
             return Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT_WATCH && powerManager.isInteractive || Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT_WATCH && powerManager.isScreenOn
         }
 
+
+    private fun getLocalIpAddress(): String {
+        try {
+
+            val wifiManager: WifiManager = applicationContext?.getSystemService(WIFI_SERVICE) as WifiManager
+            return ipToString(wifiManager.connectionInfo.ipAddress)
+        } catch (ex: Exception) {
+            Log.e("IP Address", ex.toString())
+        }
+
+        return "?"
+    }
+
+    private fun ipToString(i: Int): String {
+        return (i and 0xFF).toString() + "." +
+                (i shr 8 and 0xFF) + "." +
+                (i shr 16 and 0xFF) + "." +
+                (i shr 24 and 0xFF)
+
+    }
+
+
     private val state: JSONObject
         get() {
             Timber.d("getState")
@@ -205,6 +229,7 @@ class WallPanelService : LifecycleService(), MQTTModule.MQTTListener {
                 state.put(MqttUtils.STATE_CURRENT_URL, appLaunchUrl)
                 state.put(MqttUtils.STATE_SCREEN_ON, isScreenOn)
                 state.put(MqttUtils.STATE_BRIGHTNESS, screenUtils.getCurrentScreenBrightness())
+                state.put("IP",getLocalIpAddress())
             } catch (e: JSONException) {
                 e.printStackTrace()
             }
