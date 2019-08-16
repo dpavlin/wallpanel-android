@@ -199,7 +199,7 @@ class WallPanelService : LifecycleService(), MQTTModule.MQTTListener {
             return Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT_WATCH && powerManager.isInteractive || Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT_WATCH && powerManager.isScreenOn
         }
 
-
+    // https://gist.github.com/MaTriXy/0370e297f4600873795c7edb8e8f18e8
     private fun getLocalIpAddress(): String {
         try {
 
@@ -230,6 +230,8 @@ class WallPanelService : LifecycleService(), MQTTModule.MQTTListener {
                 state.put(MqttUtils.STATE_SCREEN_ON, isScreenOn)
                 state.put(MqttUtils.STATE_BRIGHTNESS, screenUtils.getCurrentScreenBrightness())
                 state.put("IP",getLocalIpAddress())
+                state.put("time", System.currentTimeMillis().toLong())
+
             } catch (e: JSONException) {
                 e.printStackTrace()
             }

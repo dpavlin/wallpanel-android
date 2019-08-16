@@ -150,20 +150,10 @@ constructor(private val context: Context){
                 //Log.i("XXX","timestamp="+event.timestamp.toLong()+ " id="+ event.sensor.id.toInt()+" event.values="+ event.values.size.toString() + event.values[0].toString())
                 //Log.i("XXX","event="+event.toString())
                 var data = JSONObject()
-                /*
-                if(event.sensor.type == Sensor.TYPE_LIGHT) {
-                    lightSensorEvent = event
-                }
-                if(lightSensorEvent != null) {
-                    data.put(VALUE, lightSensorEvent!!.values[0])
-                    data.put(UNIT, getSensorUnit(lightSensorEvent!!.sensor.type))
-                    data.put(ID, lightSensorEvent!!.sensor.name)
-                    publishSensorData(getSensorName(lightSensorEvent!!.sensor.type), data)
-                }
-                */
-                data = JSONObject()
+
                 //data.put(VALUE, event.values[0])
                 data.put("timestamp", event.timestamp)
+                data.put("time", System.currentTimeMillis().toLong())
                 data.put("name", event.sensor.name)
                 data.put("vendor", event.sensor.vendor)
                 data.put("type", event.sensor.stringType.replace("android.sensor.",""))
@@ -201,6 +191,7 @@ constructor(private val context: Context){
             data.put(CHARGING, isCharging)
             data.put(AC_PLUGGED, acCharge)
             data.put(USB_PLUGGED, usbCharge)
+            data.put("time", System.currentTimeMillis().toLong())
         } catch (ex: JSONException) {
             ex.printStackTrace()
         }
