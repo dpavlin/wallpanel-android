@@ -158,7 +158,8 @@ constructor(private val context: Context){
                 data.put("time", System.currentTimeMillis().toLong())
                 data.put("name", event.sensor.name)
                 data.put("vendor", event.sensor.vendor)
-                data.put("type", event.sensor.stringType.replace("android.sensor.",""))
+                //data.put("type", event.sensor.stringType.replace("android.sensor.",""))
+                data.put("type_id", event.sensor.type)
 
                 var max_values = event.values.size
                 for( i in 0 until max_values ) {
@@ -167,7 +168,8 @@ constructor(private val context: Context){
                 }
                 //data.put(UNIT, getSensorUnit(event.sensor.type))
                 //data.put(ID, event.sensor.name)
-                publishSensorData(event.sensor.stringType.replace("android.sensor.",""), data)
+                //publishSensorData(event.sensor.stringType.replace("android.sensor.",""), data)
+                publishSensorData(event.sensor.type.toString(), data)
                 sensorsPublished = true
             }
         }
