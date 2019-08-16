@@ -141,9 +141,11 @@ constructor(private val context: Context){
             //if(event != null && !sensorsPublished) {
             if(event != null) {
                 val t = lastSensorEvent.get( event.sensor.name )
-                if ( t == null || ( event.timestamp - t ) / 1_000_000 > updateFrequencyMilliSeconds) {
-                    lastSensorEvent.put(event.sensor.name, event.timestamp)
-                    if ( t != null ) Log.i("XXX-update", "dt=" +(event.timestamp - t))
+                val time = System.currentTimeMillis()
+                if ( t == null || ( time - t ) > updateFrequencyMilliSeconds) {
+                    lastSensorEvent.put(event.sensor.name, time)
+                    if ( t != null ) Log.i("XXX-update", "dt=" +(time - t)
+                            +" ["+event.sensor.name+"] "+event.sensor.type)
                 } else {
                     return
                 }
