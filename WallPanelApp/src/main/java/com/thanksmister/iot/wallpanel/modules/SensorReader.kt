@@ -121,7 +121,8 @@ constructor(private val context: Context){
         Timber.d("startSensorReadings")
         if(mSensorManager != null) {
             for (sensor in mSensorList) {
-                mSensorManager.registerListener(sensorListener, sensor, SENSOR_DELAY_NORMAL)
+                mSensorManager.registerListener(sensorListener, sensor, updateFrequencyMilliSeconds)
+                Timber.i("SENSOR name: ${sensor.name} vendor: ${sensor.vendor} minDelay=${sensor.minDelay} power=${sensor.power}")
             }
         }
     }
