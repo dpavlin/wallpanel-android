@@ -22,8 +22,6 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 
 public interface MQTTServiceInterface {
 
-    boolean isReady();
-
     void publish(String command, String payload);
 
     void reconfigure(Context context, MQTTOptions options, MQTTService.MqttManagerListener listener);
