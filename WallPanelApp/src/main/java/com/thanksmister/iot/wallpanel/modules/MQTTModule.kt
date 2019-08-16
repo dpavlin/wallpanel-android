@@ -74,8 +74,7 @@ class MQTTModule (base: Context?, var mqttOptions: MQTTOptions, private val list
     }
 
     fun publish(command: String, message : String) {
-        Timber.d("command: " + command)
-        Timber.d("message: " + message)
+        Timber.d("command: ${command} message: ${message}")
         if(mqttService != null) {
             mqttService!!.publish(command, message)
         }
