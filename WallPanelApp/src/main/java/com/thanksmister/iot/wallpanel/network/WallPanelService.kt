@@ -733,13 +733,11 @@ class WallPanelService : LifecycleService(), MQTTModule.MQTTListener {
             val delay = (3000).toLong()
             appStatePublished = true
             publishMessage(COMMAND_STATE, state.toString())
-            appStateClearHandler.postDelayed({ clearPublishApplicationState() }, delay)
+            appStateClearHandler.postDelayed({
+                Timber.d("clearPublishApplicationState")
+                appStatePublished = false
+            }, delay)
         }
-    }
-
-    private fun clearPublishApplicationState() {
-        Timber.d("clearPublishApplicationState")
-        appStatePublished = false
     }
 
     private fun publishFaceDetected() {
