@@ -321,6 +321,14 @@ class WallPanelService : LifecycleService(), MQTTModule.MQTTListener {
         }
     }
 
+    private fun restartSensors() {
+        if (configuration.sensorsEnabled && mqttOptions.isValid) {
+            Timber.i("restartSensors")
+            sensorReader.stopReadings()
+            sensorReader.startReadings(configuration.mqttSensorFrequency, sensorCallback)
+        }
+    }
+
     private fun configureMqtt() {
         Timber.d("configureMqtt")
         if (mqttModule == null && mqttOptions.isValid) {
@@ -850,6 +858,9 @@ class WallPanelService : LifecycleService(), MQTTModule.MQTTListener {
                     intent.action == Intent.ACTION_USER_PRESENT) {
                 Timber.i("Screen state changed")
                 publishApplicationState()
+                // when screen goes off we need to re-register sensors
+                // https://stackoverflow.com/questions/2143102/accelerometer-stops-delivering-samples-when-the-screen-is-off-on-droid-nexus-one
+                if (Intent.ACTION_SCREEN_OFF == intent.action) restartSensors()
             } else if (BROADCAST_EVENT_SCREEN_TOUCH == intent.action) {
                 Timber.i("Screen touched")
                 publishApplicationState()
