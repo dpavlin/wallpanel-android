@@ -51,12 +51,10 @@ import com.thanksmister.iot.wallpanel.utils.MqttUtils.Companion.COMMAND_CLEAR_CA
 import com.thanksmister.iot.wallpanel.utils.MqttUtils.Companion.COMMAND_EVAL
 import com.thanksmister.iot.wallpanel.utils.MqttUtils.Companion.COMMAND_RELAUNCH
 import com.thanksmister.iot.wallpanel.utils.MqttUtils.Companion.COMMAND_RELOAD
-import com.thanksmister.iot.wallpanel.utils.MqttUtils.Companion.COMMAND_SENSOR
 import com.thanksmister.iot.wallpanel.utils.MqttUtils.Companion.COMMAND_SENSOR_FACE
 import com.thanksmister.iot.wallpanel.utils.MqttUtils.Companion.COMMAND_SENSOR_MOTION
 import com.thanksmister.iot.wallpanel.utils.MqttUtils.Companion.COMMAND_SENSOR_QR_CODE
 import com.thanksmister.iot.wallpanel.utils.MqttUtils.Companion.COMMAND_SPEAK
-import com.thanksmister.iot.wallpanel.utils.MqttUtils.Companion.COMMAND_STATE
 import com.thanksmister.iot.wallpanel.utils.MqttUtils.Companion.COMMAND_URL
 import com.thanksmister.iot.wallpanel.utils.MqttUtils.Companion.COMMAND_VOLUME
 import com.thanksmister.iot.wallpanel.utils.MqttUtils.Companion.COMMAND_WAKE
@@ -344,7 +342,7 @@ class WallPanelService : LifecycleService(), MQTTModule.MQTTListener {
             clearAlertMessage() // clear any dialogs
             mqttConnected = true
         }
-        publishApplicationState()
+        publishApplicationState("connected")
         clearFaceDetected()
         clearMotionDetected()
     }
@@ -727,17 +725,11 @@ class WallPanelService : LifecycleService(), MQTTModule.MQTTListener {
         }
     }
 
-    private fun publishApplicationState() {
+    private fun publishApplicationState(event: String? = null) {
         Timber.d("publishApplicationState")
-        if (!appStatePublished) {
-            val delay = (3000).toLong()
-            appStatePublished = true
-            publishMessage(COMMAND_STATE, state.toString())
-            appStateClearHandler.postDelayed({
-                Timber.d("clearPublishApplicationState")
-                appStatePublished = false
-            }, delay)
-        }
+        val data = state;
+        if ( event != null ) data.put("event", event)
+        publishMessage("state", data)
     }
 
     private fun publishFaceDetected() {
@@ -849,27 +841,27 @@ class WallPanelService : LifecycleService(), MQTTModule.MQTTListener {
                 appLaunchUrl = intent.getStringExtra(BROADCAST_EVENT_URL_CHANGE)
                 if (appLaunchUrl != configuration.appLaunchUrl) {
                     Timber.i("Url changed to $appLaunchUrl")
-                    publishApplicationState()
+                    publishApplicationState(appLaunchUrl)
                 }
             } else if (Intent.ACTION_SCREEN_OFF == intent.action ||
                     intent.action == Intent.ACTION_SCREEN_ON ||
                     intent.action == Intent.ACTION_USER_PRESENT) {
                 Timber.i("Screen state changed")
-                publishApplicationState()
+                publishApplicationState("screen")
                 // when screen goes off we need to re-register sensors
                 // https://stackoverflow.com/questions/2143102/accelerometer-stops-delivering-samples-when-the-screen-is-off-on-droid-nexus-one
                 if (Intent.ACTION_SCREEN_OFF == intent.action) restartSensors()
             } else if (BROADCAST_EVENT_SCREEN_TOUCH == intent.action) {
                 Timber.i("Screen touched")
-                publishApplicationState()
+                publishApplicationState("touch")
             }
         }
     }
 
     private val sensorCallback = object : SensorCallback {
         override fun publishSensorData(sensorName: String, sensorData: JSONObject) {
-            publishApplicationState()
-            publishMessage(COMMAND_SENSOR + sensorName, sensorData)
+            //publishApplicationState()
+            publishMessage("sensor/" + sensorName, sensorData)
         }
     }
 

@@ -35,7 +35,6 @@ class MqttUtils {
 
         const val PORT = 1883
         const val TOPIC_COMMAND = "command"
-        const val COMMAND_STATE = "state"
         const val VALUE = "value"
         const val COMMAND_SENSOR_FACE = "sensor/face"
         const val COMMAND_SENSOR_QR_CODE = "sensor/qrcode"
@@ -43,7 +42,6 @@ class MqttUtils {
         const val STATE_CURRENT_URL = "currentUrl"
         const val STATE_SCREEN_ON = "screenOn"
         const val STATE_BRIGHTNESS = "brightness"
-        const val COMMAND_SENSOR = "sensor/"
         const val COMMAND_URL = "url"
         const val COMMAND_CAMERA = "camera"
         const val COMMAND_RELAUNCH = "relaunch"
