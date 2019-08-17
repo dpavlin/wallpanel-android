@@ -16,7 +16,6 @@
 
 package com.thanksmister.iot.wallpanel.network
 
-import android.R.id.message
 import android.content.Context
 import android.text.TextUtils
 import com.crashlytics.android.Crashlytics
@@ -32,7 +31,6 @@ import java.io.IOException
 import java.security.GeneralSecurityException
 import java.security.NoSuchAlgorithmException
 import java.security.spec.InvalidKeySpecException
-import java.util.concurrent.atomic.AtomicBoolean
 
 class MQTTService(private var context: Context, options: MQTTOptions,
                   private var listener: MqttManagerListener?) : MQTTServiceInterface {
@@ -90,15 +88,22 @@ class MQTTService(private var context: Context, options: MQTTOptions,
                     listener?.handleMqttException("Could not initialize MQTT")
                 }
             }
-            // TODO append the "command" part
-            Timber.d("Publishing: $payload")
-            Timber.d("Base Topic: ${mqttOptions?.getBaseTopic()}")
-            Timber.d("Command Topic: $command")
-            Timber.d("Payload: $payload")
+
             val mqttMessage = MqttMessage()
             mqttMessage.payload = payload.toByteArray()
             mqttMessage.isRetained = SHOULD_RETAIN
-            sendMessage(mqttOptions?.getBaseTopic() + command, mqttMessage)
+
+            val topic = mqttOptions?.getBaseTopic() + command
+            Timber.d("topic:$topic $mqttMessage")
+
+            try {
+                mqttClient?.let { if (it.isConnected) it.publish(topic, mqttMessage) }
+            } catch (e: NullPointerException) {
+                Timber.e(e.message)
+            } catch (e: MqttException) {
+                Timber.e("Error Sending Command: " + e.message)
+                listener?.handleMqttException("Couldn't send message to the MQTT broker for topic $topic, check the MQTT client settings or your connection to the broker.")
+            }
 
         } catch (e: MqttException) {
             listener?.handleMqttException("Exception while publishing command $command and it's payload to the MQTT broker.")
@@ -191,24 +196,6 @@ class MQTTService(private var context: Context, options: MQTTOptions,
         } catch (e: Exception) {
             e.printStackTrace()
             listener?.handleMqttException("Error establishing MQTT connection to MQTT broker with address ${mqttOptions?.brokerUrl}.")
-        }
-    }
-
-    @Throws(MqttException::class)
-    private fun sendMessage(mqttTopic: String?, mqttMessage: MqttMessage) {
-        Timber.d("sendMessage")
-        try {
-            mqttClient?.let {
-                if (it.isConnected) {
-                    it.publish(mqttTopic, mqttMessage)
-                    Timber.d("Command Topic: $mqttTopic Payload: $message")
-                }
-            }
-        } catch (e: NullPointerException) {
-            Timber.e(e.message)
-        } catch (e: MqttException) {
-            Timber.e("Error Sending Command: " + e.message)
-            listener?.handleMqttException("Couldn't send message to the MQTT broker for topic $mqttTopic, check the MQTT client settings or your connection to the broker.")
         }
     }
 
