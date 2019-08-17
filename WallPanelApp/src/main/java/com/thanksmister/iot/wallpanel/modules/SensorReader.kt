@@ -59,8 +59,6 @@ constructor(private val context: Context) {
         Timber.d("Creating SensorReader")
         mSensorManager = context.getSystemService(SENSOR_SERVICE) as SensorManager
         for (s in mSensorManager.getSensorList(Sensor.TYPE_ALL)) {
-            Log.i("TAG", s.toString())
-            //if (getSensorName(s.type) != null)
             mSensorList.add(s)
         }
     }
@@ -143,15 +141,11 @@ constructor(private val context: Context) {
                 val time = System.currentTimeMillis()
                 if (t == null || (time - t) > updateFrequencyMilliSeconds) {
                     lastSensorEvent.put(event.sensor.name, time)
-                    if (t != null) Log.i("XXX-update", "dt=" + (time - t)
-                            + " [" + event.sensor.name + "] " + event.sensor.type)
                 } else {
                     return
                 }
-                //Log.i("XXX","timestamp="+event.timestamp.toLong()+ " id="+ event.sensor.id.toInt()+" event.values="+ event.values.size.toString() + event.values[0].toString())
-                //Log.i("XXX","event="+event.toString())
-                val data = JSONObject()
 
+                val data = JSONObject()
                 //data.put(VALUE, event.values[0])
                 data.put("timestamp", event.timestamp)
                 data.put("time", System.currentTimeMillis().toLong())
