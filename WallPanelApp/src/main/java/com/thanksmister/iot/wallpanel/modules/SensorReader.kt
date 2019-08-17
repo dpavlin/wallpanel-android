@@ -42,7 +42,6 @@ constructor(private val context: Context) {
     private val batteryHandler = Handler()
     private var updateFrequencyMilliSeconds: Int = 0
     private var callback: SensorCallback? = null
-    private var sensorsPublished: Boolean = false
     private var lightSensorEvent: SensorEvent? = null
     private val lastSensorEvent = mutableMapOf<String, Long?>()
 
@@ -52,7 +51,6 @@ constructor(private val context: Context) {
                 Timber.d("Updating Battery")
                 getBatteryReading()
                 batteryHandler.postDelayed(this, updateFrequencyMilliSeconds.toLong())
-                sensorsPublished = false
             }
         }
     }
@@ -140,7 +138,6 @@ constructor(private val context: Context) {
 
     private val sensorListener = object : SensorEventListener {
         override fun onSensorChanged(event: SensorEvent?) {
-            //if(event != null && !sensorsPublished) {
             if (event != null) {
                 val t = lastSensorEvent.get(event.sensor.name)
                 val time = System.currentTimeMillis()
@@ -196,7 +193,6 @@ TYPE_TEMPERATURE 	event.values[0] 	°C 	Device temperature.1
                 //data.put(ID, event.sensor.name)
                 //publishSensorData(event.sensor.stringType.replace("android.sensor.",""), data)
                 publishSensorData(sensorTypeName, data)
-                sensorsPublished = true
             }
         }
 
