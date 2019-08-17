@@ -87,15 +87,24 @@ constructor(private val context: Context) {
 
     private fun getSensorName(sensorType: Int): String {
         return when (sensorType) {
+            //
             TYPE_ACCELEROMETER -> "accelerometer"
+            TYPE_GRAVITY -> "gravity"
+            TYPE_GYROSCOPE -> "gyroscope"
+            TYPE_LINEAR_ACCELERATION -> "linear_acceleration"
+            TYPE_MAGNETIC_FIELD -> "magnetic_field"
+            TYPE_ORIENTATION -> "orientation"
+            TYPE_ROTATION_VECTOR -> "rotation_vector"
 
             TYPE_AMBIENT_TEMPERATURE -> "ambient_temperature"
             TYPE_LIGHT -> "light"
-            TYPE_MAGNETIC_FIELD -> "magnetic_field"
             TYPE_PRESSURE -> "pressure"
             TYPE_RELATIVE_HUMIDITY -> "humidity"
             TYPE_TEMPERATURE -> "temperature"
-            else -> sensorType.toString()
+
+            TYPE_PROXIMITY -> "proximity"
+
+            else -> "type_$sensorType"
         }
     }
 
@@ -155,7 +164,7 @@ constructor(private val context: Context) {
                 data.put("type", sensorTypeName)
                 data.put("type_id", event.sensor.type)
 
-                var max_values = when (event.sensor.type) {
+                val max_values = when (event.sensor.type) {
                     /*
                      Table 1. Environment sensors that are supported on the Android platform.
 Sensor 	Sensor event data 	Units of measure 	Data description
@@ -168,25 +177,33 @@ TYPE_TEMPERATURE 	event.values[0] 	°C 	Device temperature.1
 
                      */
                     TYPE_AMBIENT_TEMPERATURE, TYPE_LIGHT, TYPE_PRESSURE,
-                    TYPE_RELATIVE_HUMIDITY, TYPE_TEMPERATURE -> 1
+                    TYPE_RELATIVE_HUMIDITY, TYPE_TEMPERATURE,
+                    TYPE_PROXIMITY -> 1
                     else -> event.values.size
                 }
 
                 if (max_values == 1) {
-                    data.put(VALUE, event.values[0])
-                } else if (event.sensor.type == TYPE_ACCELEROMETER) {
-                    data.put("x",event.values[0])
-                    data.put("y",event.values[1])
-                    data.put("z",event.values[2])
+                    data.put(sensorTypeName, event.values[0])
                 } else {
-                    for (i in 0 until max_values) {
-                        data.put(String.format("v%d", i), event.values[i])
+                    when (event.sensor.type) {
+
+                        TYPE_ACCELEROMETER, TYPE_GRAVITY, TYPE_GYROSCOPE, TYPE_LINEAR_ACCELERATION,
+                        TYPE_ORIENTATION, TYPE_ROTATION_VECTOR, TYPE_MAGNETIC_FIELD -> {
+                            data.put("${sensorTypeName}_x", event.values[0])
+                            data.put("${sensorTypeName}_y", event.values[1])
+                            data.put("${sensorTypeName}_z", event.values[2])
+                        }
+                        else -> {
+                            for (i in 0 until max_values) {
+                                data.put("${sensorTypeName}_$i", event.values[i])
+                            }
+                        }
                     }
                 }
                 //data.put(UNIT, getSensorUnit(event.sensor.type))
                 //data.put(ID, event.sensor.name)
-                //publishSensorData(event.sensor.stringType.replace("android.sensor.",""), data)
                 publishSensorData(sensorTypeName, data)
+
             }
         }
 
