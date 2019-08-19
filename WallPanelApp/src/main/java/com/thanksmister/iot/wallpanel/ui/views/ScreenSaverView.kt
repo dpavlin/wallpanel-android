@@ -18,7 +18,6 @@ package com.thanksmister.iot.wallpanel.ui.views
 
 import android.content.Context
 import android.os.Handler
-import android.text.format.DateUtils
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.widget.RelativeLayout
@@ -36,35 +35,41 @@ class ScreenSaverView : RelativeLayout {
     private var parentHeight: Int = 0
 
     val calendar: Calendar = Calendar.getInstance()
+    var last_minute = -1; // invalid to start with
 
     private val timeRunnable = object : Runnable {
         override fun run() {
-            val date = Date()
-            calendar.time = date
-            val currentTimeString = DateUtils.formatDateTime(context, date.time, DateUtils.FORMAT_SHOW_TIME)
-            screenSaverClock.text = currentTimeString
 
-            val width = screenSaverClockLayout.width
-            val height = screenSaverClockLayout.height
-            parentWidth = screenSaverView.width
-            parentHeight = screenSaverView.height
-            try {
-                if (width > 0 && height > 0 && parentWidth > 0 && parentHeight > 0) {
-                    if(parentHeight - width > 0) {
-                        val newX = Random().nextInt(parentWidth - width)
-                        screenSaverClockLayout.x = newX.toFloat()
+            val time = System.currentTimeMillis()
+
+            val date = Date()
+            screenSaverClock.text = "%2d:%02d:%02d".format(date.hours, date.minutes, date.seconds)
+
+            if (date.minutes != last_minute) {
+                last_minute = date.minutes;
+                val width = screenSaverClockLayout.width
+                val height = screenSaverClockLayout.height
+                parentWidth = screenSaverView.width
+                parentHeight = screenSaverView.height
+                try {
+                    if (width > 0 && height > 0 && parentWidth > 0 && parentHeight > 0) {
+                        if(parentHeight - width > 0) {
+                            val newX = Random().nextInt(parentWidth - width)
+                            screenSaverClockLayout.x = newX.toFloat()
+                        }
+                        if(parentHeight - height > 0) {
+                            val newY = Random().nextInt(parentHeight - height)
+                            screenSaverClockLayout.y = newY.toFloat()
+                        }
                     }
-                    if(parentHeight - height > 0) {
-                        val newY = Random().nextInt(parentHeight - height)
-                        screenSaverClockLayout.y = newY.toFloat()
-                    }
+                } catch (e: IllegalArgumentException) {
+                    Timber.e(e.message)
                 }
-            } catch (e: IllegalArgumentException) {
-                Timber.e(e.message)
             }
 
-            val offset = 60L - calendar.get(Calendar.SECOND)
-            timeHandler?.postDelayed(this, TimeUnit.SECONDS.toMillis(offset))
+
+            val offset = 1000 - System.currentTimeMillis() - time
+            timeHandler?.postDelayed(this, offset)
         }
     }
 
@@ -98,3 +103,4 @@ class ScreenSaverView : RelativeLayout {
         screenSaverClock.setTextSize(TypedValue.COMPLEX_UNIT_PX, initialRegular + 100)
     }
 }
+
