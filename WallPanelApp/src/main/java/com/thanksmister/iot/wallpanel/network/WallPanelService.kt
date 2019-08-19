@@ -552,6 +552,19 @@ class WallPanelService : LifecycleService(), MQTTModule.MQTTListener {
                     actions++
                 }
             }
+
+            // https://stackoverflow.com/questions/46826826/sending-commands-to-google-assistant-from-android-app
+            if (commandJson.has("google")) {
+                val query = commandJson.getString("google")
+                Timber.d("google [$query]")
+                val intent = Intent(Intent.ACTION_WEB_SEARCH);
+                //intent.setClassName("com.google.android.googlequicksearchbox", "com.google.android.googlequicksearchbox.SearchActivity");
+                intent.putExtra("query", query);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK); //necessary if launching from Service
+                startActivity(intent);
+                actions++
+            }
+
             if (commandJson.has(COMMAND_URL)) {
                 browseUrl(commandJson.getString(COMMAND_URL))
                 actions++
