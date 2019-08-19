@@ -539,33 +539,40 @@ class WallPanelService : LifecycleService(), MQTTModule.MQTTListener {
     private fun processCommand(commandJson: JSONObject): Boolean {
         Timber.d("processCommand $commandJson")
         try {
+            var actions = 0;
             if (commandJson.has(COMMAND_CAMERA)) {
                 val camera = commandJson.getBoolean(COMMAND_CAMERA)
                 if(camera && !configuration.httpMJPEGEnabled) {
                     configuration.setHttpMJPEGEnabled(true)
                     startHttp()
+                    actions++
                 } else if (!camera && configuration.httpMJPEGEnabled) {
                     configuration.setHttpMJPEGEnabled(false)
                     stopMJPEG()
+                    actions++
                 }
             }
             if (commandJson.has(COMMAND_URL)) {
                 browseUrl(commandJson.getString(COMMAND_URL))
+                actions++
             }
             if (commandJson.has(COMMAND_RELAUNCH)) {
                 if (commandJson.getBoolean(COMMAND_RELAUNCH)) {
                     browseUrl(configuration.appLaunchUrl)
+                    actions++
                 }
             }
             if (commandJson.has(COMMAND_WAKE)) {
                 if (commandJson.getBoolean(COMMAND_WAKE)) {
                     val wakeTime = commandJson.optLong(COMMAND_WAKETIME, SCREEN_WAKE_TIME/1000) * 1000
                     switchScreenOn(wakeTime)
+                    actions++
                 }
                 else {
                     if (partialWakeLock != null && partialWakeLock!!.isHeld) {
                         Timber.d("Release wakelock")
                         partialWakeLock!!.release()
+                        actions++
                     }
                 }
             }
@@ -573,30 +580,40 @@ class WallPanelService : LifecycleService(), MQTTModule.MQTTListener {
                 // This will permanently change the screen brightness level
                 val brightness = commandJson.getInt(COMMAND_BRIGHTNESS)
                 changeScreenBrightness(brightness)
+                actions++
             }
             if (commandJson.has(COMMAND_RELOAD)) {
                 if (commandJson.getBoolean(COMMAND_RELOAD)) {
                     reloadPage()
+                    actions++
                 }
             }
             if (commandJson.has(COMMAND_CLEAR_CACHE)) {
                 if (commandJson.getBoolean(COMMAND_CLEAR_CACHE)) {
                     clearBrowserCache()
+                    actions++
                 }
             }
             if (commandJson.has(COMMAND_EVAL)) {
                 evalJavascript(commandJson.getString(COMMAND_EVAL))
+                actions++
             }
             if (commandJson.has(COMMAND_AUDIO)) {
                 playAudio(commandJson.getString(COMMAND_AUDIO))
+                actions++
             }
             if (commandJson.has(COMMAND_SPEAK)) {
                 speakMessage(commandJson.getString(COMMAND_SPEAK))
+                actions++
             }
             if (commandJson.has(COMMAND_VOLUME)) {
                 setVolume((commandJson.getInt(COMMAND_VOLUME).toFloat() / 100))
+                actions++
             }
+
+            publishApplicationState("$actions commands executed")
         } catch (ex: JSONException) {
+            publishApplicationState("invalid JSON")
             Timber.e("Invalid JSON passed as a command: " + commandJson.toString())
             return false
         }
@@ -609,6 +626,7 @@ class WallPanelService : LifecycleService(), MQTTModule.MQTTListener {
         return try {
             processCommand(JSONObject(command))
         } catch (ex: JSONException) {
+            publishApplicationState("invalid JSON")
             Timber.e("Invalid JSON passed as a command: $command")
             false
         }
