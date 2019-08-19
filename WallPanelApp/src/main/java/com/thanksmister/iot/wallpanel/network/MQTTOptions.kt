@@ -61,7 +61,9 @@ constructor(private val configuration: Configuration) {
     }
 
     fun getBaseTopic(): String {
-        return configuration.mqttBaseTopic
+        var baseTopic = configuration.mqttBaseTopic
+        if (! baseTopic.endsWith("/")) baseTopic += "/"; // add required traling slash
+        return  baseTopic
     }
 
     fun getStateTopic(): String {
